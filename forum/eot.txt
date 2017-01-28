@@ -1,0 +1,7 @@
+Thet title of this article is misleading - author's claims are far less radical than what title suggests. He merely claims, that science should benefit from developments in computational technology and use new techniques (like machine learning).
+It is hard not to agree, and in fact, many fields of research are focusing on applying those new assets. 
+I strongly disagree, with the "end of theory" claim. Without sound theoretical basis, science will become a sorcery - esoteric art, delivering the results, but not explaining anything.  
+The drive to explain the reality and broaden humanity's knowledge will be replaced with pursuit of best fitting model, disregarding any reality check.
+In addition, I believe that the complexity of the universe is infinite - given finite nature of computational power, it will never be possible to explore all the data there is. 
+In reality, many sophisticated algorithms were developed to help overcome computational issues, and are still valid today. Despite increase in computational power, better algorithm can be faster on ordinary PC than on a supercomputer (e.g. quick sort vs. selection sort).
+To sum up - in my opinion sound theories are needed now even more, than before, because with the advent of "big data and machine learning", the delivery of accurate results became cheap. Explaining the truth, that is behind discovery is much more difficult.

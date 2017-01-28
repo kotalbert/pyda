@@ -6,66 +6,33 @@ Hypothesis Testing
 
 import pandas as pd
 import numpy as np
+import math
 # from scipy.stats import ttest_ind
 
-# Use this dictionary to map state names to two letter acronyms
-states = {'OH': 'Ohio',
-          'KY': 'Kentucky',
-          'AS': 'American Samoa',
-          'NV': 'Nevada',
-          'WY': 'Wyoming',
-          'NA': 'National',
-          'AL': 'Alabama',
-          'MD': 'Maryland',
-          'AK': 'Alaska',
-          'UT': 'Utah',
-          'OR': 'Oregon',
-          'MT': 'Montana',
-          'IL': 'Illinois',
-          'TN': 'Tennessee',
-          'DC': 'District of Columbia',
-          'VT': 'Vermont',
-          'ID': 'Idaho',
-          'AR': 'Arkansas',
-          'ME': 'Maine',
-          'WA': 'Washington',
-          'HI': 'Hawaii',
-          'WI': 'Wisconsin',
-          'MI': 'Michigan',
-          'IN': 'Indiana',
-          'NJ': 'New Jersey',
-          'AZ': 'Arizona',
-          'GU': 'Guam',
-          'MS': 'Mississippi',
-          'PR': 'Puerto Rico',
-          'NC': 'North Carolina',
-          'TX': 'Texas',
-          'SD': 'South Dakota',
-          'MP': 'Northern Mariana Islands',
-          'IA': 'Iowa',
-          'MO': 'Missouri',
-          'CT': 'Connecticut',
-          'WV': 'West Virginia',
-          'SC': 'South Carolina',
-          'LA': 'Louisiana',
-          'KS': 'Kansas',
-          'NY': 'New York',
-          'NE': 'Nebraska',
-          'OK': 'Oklahoma',
-          'FL': 'Florida',
-          'CA': 'California',
-          'CO': 'Colorado',
-          'PA': 'Pennsylvania',
-          'DE': 'Delaware',
-          'NM': 'New Mexico',
-          'RI': 'Rhode Island',
-          'MN': 'Minnesota',
-          'VI': 'Virgin Islands',
-          'NH': 'New Hampshire',
-          'MA': 'Massachusetts',
-          'GA': 'Georgia',
-          'ND': 'North Dakota',
-          'VA': 'Virginia'}
+
+def get_states():
+    """Use this dictionary to map state names to two letter acronyms"""
+    states = {'OH': 'Ohio', 'KY': 'Kentucky', 'AS': 'American Samoa',
+              'NV': 'Nevada', 'WY': 'Wyoming', 'NA': 'National',
+              'AL': 'Alabama', 'MD': 'Maryland', 'AK': 'Alaska',
+              'UT': 'Utah', 'OR': 'Oregon', 'MT': 'Montana',
+              'IL': 'Illinois', 'TN': 'Tennessee', 'DC': 'District of Columbia',
+              'VT': 'Vermont', 'ID': 'Idaho', 'AR': 'Arkansas', 'ME': 'Maine',
+              'WA': 'Washington', 'HI': 'Hawaii', 'WI': 'Wisconsin',
+              'MI': 'Michigan', 'IN': 'Indiana', 'NJ': 'New Jersey',
+              'AZ': 'Arizona', 'GU': 'Guam', 'MS': 'Mississippi',
+              'PR': 'Puerto Rico', 'NC': 'North Carolina', 'TX': 'Texas',
+              'SD': 'South Dakota', 'MP': 'Northern Mariana Islands',
+              'IA': 'Iowa', 'MO': 'Missouri', 'CT': 'Connecticut',
+              'WV': 'West Virginia', 'SC': 'South Carolina', 'LA': 'Louisiana',
+              'KS': 'Kansas', 'NY': 'New York', 'NE': 'Nebraska',
+              'OK': 'Oklahoma', 'FL': 'Florida', 'CA': 'California',
+              'CO': 'Colorado', 'PA': 'Pennsylvania', 'DE': 'Delaware',
+              'NM': 'New Mexico', 'RI': 'Rhode Island', 'MN': 'Minnesota',
+              'VI': 'Virgin Islands', 'NH': 'New Hampshire',
+              'MA': 'Massachusetts', 'GA': 'Georgia', 'ND': 'North Dakota',
+              'VA': 'Virginia'}
+    return(states)
 
 
 def get_list_of_university_towns():
@@ -176,6 +143,35 @@ def get_recession_bottom():
     return(gdp['gdp09'].argmin())
 
 
+def get_houses():
+    """
+    Helper function to read housing data as data frame.
+    Limit timeframe to [January 2000, December 2016]
+    """
+    homes = pd.read_csv('../data/City_Zhvi_AllHomes.csv')
+    # create list of column indices to select from dataset
+    l1 = [1, 2]
+    l2 = list(range(51, 251))
+    cind = l1 + l2
+    homes = homes.iloc[:][cind]
+    homes['2016-09'] = np.nan
+    return(homes)
+
+
+def date_label(i):
+    """
+    Helper funtion, label 67 quarters, from 2000q1 to 2016q3.
+    Takes current iteration and returns quarter label.
+    """
+    dlab = '{0}q{1}'
+    # count years
+    yr = 2000 + math.floor(i/4)
+    # count quarters
+    qt = i % 4+1
+
+    return(dlab.format(yr, qt))
+
+
 def convert_housing_data_to_quarters():
     '''Converts the housing data to quarters and returns it as mean
     values in a dataframe. This dataframe should be a dataframe with
@@ -187,8 +183,19 @@ def convert_housing_data_to_quarters():
 
     The resulting dataframe should have 67 columns, and 10,730 rows.
     '''
+    homes = get_houses()
+    dind = 6
+    qrts = pd.DataFrame()
+    for i in range(0, 67):
+        dlab = date_label(i)
+        qt = homes.ix[:, dind+i:dind+i+3]
+        qrts[dlab] = qt.mean(axis=1)
 
-    return "ANSWER"
+    indnames = ['State', 'RegionName']
+    indcols = homes[indnames]
+    df = pd.concat([indcols, qrts], axis=1)
+    df.set_index(indnames, inplace=True)
+    return (df)
 
 
 def run_ttest():
