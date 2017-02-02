@@ -7,32 +7,7 @@ Hypothesis Testing
 import pandas as pd
 import numpy as np
 import math
-# from scipy.stats import ttest_ind
-
-
-def get_states():
-    """Use this dictionary to map state names to two letter acronyms"""
-    states = {'OH': 'Ohio', 'KY': 'Kentucky', 'AS': 'American Samoa',
-              'NV': 'Nevada', 'WY': 'Wyoming', 'NA': 'National',
-              'AL': 'Alabama', 'MD': 'Maryland', 'AK': 'Alaska',
-              'UT': 'Utah', 'OR': 'Oregon', 'MT': 'Montana',
-              'IL': 'Illinois', 'TN': 'Tennessee', 'DC': 'District of Columbia',
-              'VT': 'Vermont', 'ID': 'Idaho', 'AR': 'Arkansas', 'ME': 'Maine',
-              'WA': 'Washington', 'HI': 'Hawaii', 'WI': 'Wisconsin',
-              'MI': 'Michigan', 'IN': 'Indiana', 'NJ': 'New Jersey',
-              'AZ': 'Arizona', 'GU': 'Guam', 'MS': 'Mississippi',
-              'PR': 'Puerto Rico', 'NC': 'North Carolina', 'TX': 'Texas',
-              'SD': 'South Dakota', 'MP': 'Northern Mariana Islands',
-              'IA': 'Iowa', 'MO': 'Missouri', 'CT': 'Connecticut',
-              'WV': 'West Virginia', 'SC': 'South Carolina', 'LA': 'Louisiana',
-              'KS': 'Kansas', 'NY': 'New York', 'NE': 'Nebraska',
-              'OK': 'Oklahoma', 'FL': 'Florida', 'CA': 'California',
-              'CO': 'Colorado', 'PA': 'Pennsylvania', 'DE': 'Delaware',
-              'NM': 'New Mexico', 'RI': 'Rhode Island', 'MN': 'Minnesota',
-              'VI': 'Virgin Islands', 'NH': 'New Hampshire',
-              'MA': 'Massachusetts', 'GA': 'Georgia', 'ND': 'North Dakota',
-              'VA': 'Virginia'}
-    return(states)
+from scipy.stats import ttest_ind
 
 
 def get_list_of_university_towns():
@@ -154,7 +129,6 @@ def get_houses():
     l2 = list(range(51, 251))
     cind = l1 + l2
     homes = homes.iloc[:][cind]
-    homes['2016-09'] = np.nan
     return(homes)
 
 
@@ -184,11 +158,17 @@ def convert_housing_data_to_quarters():
     The resulting dataframe should have 67 columns, and 10,730 rows.
     '''
     homes = get_houses()
-    dind = 6
     qrts = pd.DataFrame()
     for i in range(0, 67):
         dlab = date_label(i)
-        qt = homes.ix[:, dind+i:dind+i+3]
+        j = i*3 + 2
+
+        try:
+            qt = homes.ix[:, [j, j+1, j+2]]
+        except IndexError:
+            # catch missing '2016-09'
+            qt = homes.ix[:, [j, j+1]]
+
         qrts[dlab] = qt.mean(axis=1)
 
     indnames = ['State', 'RegionName']
@@ -196,6 +176,31 @@ def convert_housing_data_to_quarters():
     df = pd.concat([indcols, qrts], axis=1)
     df.set_index(indnames, inplace=True)
     return (df)
+
+
+def get_priceratio():
+    """
+    Helper function to calculate housing praca ratio before regression an at
+    the regression bottom.
+    Indexed by State and RegionName.
+    """
+    h = convert_housing_data_to_quarters()
+
+    # quarter before recression start
+    rs = get_recession_start()
+    qbr = h.columns.get_loc(rs) - 1
+    pbr = h.ix[:, qbr]
+
+    # quarter at regression bottom
+    rb = get_recession_bottom()
+    prb = h[rb]
+
+    # calculate price ratio
+    df = pd.DataFrame()
+    df['pr'] = pbr/prb
+    df.dropna(inplace=True)
+
+    return(df)
 
 
 def run_ttest():
@@ -212,5 +217,21 @@ def run_ttest():
     value for better should be either "university town" or "non-university town"
     depending on which has a lower mean price ratio (which is equivilent to a
     reduced market loss).'''
+    pr = get_priceratio().reset_index('RegionName')
+    ut = get_list_of_university_towns()
+    # merge pr and ut to mark university towns in the data
+    pr_ut = pd.merge(pr, ut, how='left', on='RegionName')
 
-    return "ANSWER"
+    # price ratio - univeristy towns
+    prut = pr_ut[pd.notnull(pr_ut['State'])]['pr']
+    # price ratio - non university towns
+    prnut = pr_ut[pd.isnull(pr_ut['State'])]['pr']
+
+    # calulating test results
+    ttest_res = ttest_ind(prut, prnut)
+    p = ttest_res.pvalue
+    different = True if p < 0.01 else False
+    better = "university town" if prut.mean() < prnut.mean() \
+        else "non-university town"
+
+    return ((different, p, better))
